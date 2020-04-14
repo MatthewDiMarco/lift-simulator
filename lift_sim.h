@@ -16,7 +16,7 @@
 #define MAX_FLOOR 20
 
 // Protoype Declarations
-int main(const int argc, const char* argv[]);
+int main(int argc, char const *argv[]);
 void startSim(int bufferSize, double liftDelay);
 void* request(void* arg);
 void* lift(void* arg);

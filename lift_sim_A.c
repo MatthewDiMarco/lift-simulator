@@ -16,7 +16,7 @@
 #include "fileio.h"
 #include "linked_list.h"
 
-int main(const int argc, const char* argv[])
+int main(int argc, char const *argv[])
 {
     int bufferSize;
     double liftDelay;

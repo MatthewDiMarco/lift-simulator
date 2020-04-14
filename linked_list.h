@@ -5,7 +5,7 @@
  * 
  * PURPOSE:     Header file for linked_list.c
  *
- * LAST MOD:    12/04/20
+ * LAST MOD:    14/04/20
  * ***************************************************************************/
 
 #ifndef LL
