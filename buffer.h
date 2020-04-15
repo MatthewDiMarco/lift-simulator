@@ -9,9 +9,6 @@
  * ***************************************************************************/
 #include "linked_list.h"
 
-#ifndef BUF
-#define BUF
-
 // Struct representing the buffer
 // next = next free slot, start = first filled slot.
 typedef struct Buffer
@@ -21,8 +18,6 @@ typedef struct Buffer
     int next;
     int start;
 } Buffer;
-
-#endif
 
 // Prototype Declarations
 Buffer* createBuffer(int size);
