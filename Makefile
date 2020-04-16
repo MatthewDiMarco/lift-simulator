@@ -27,7 +27,12 @@ DELAY	= 1
 
 ifdef DEBUG
 FLAGS += -g
-DEBUG : clean $(EXEC)
+DEBUG : clean $(EXECA)
+endif
+
+ifdef RACE
+FLAGS += -fsanitize=thread
+DEBUG : clean $(EXECB)
 endif
 
 # production code compilation

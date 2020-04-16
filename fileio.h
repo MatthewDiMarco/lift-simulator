@@ -12,7 +12,7 @@
 // Constants
 #define FALSE 0
 #define TRUE !FALSE
-#define BUF 10
+#define BUF 10 // Assumption: no line will be more than 20 chars long 
 
 // Prototype Declarations
 int readRequests(char* filename, LinkedList* reqList, const int min, const int max);

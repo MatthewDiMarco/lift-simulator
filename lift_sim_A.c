@@ -17,9 +17,6 @@
 #include "linked_list.h"
 #include "buffer.h"
 
-// Declarations
-static void move(Lift* lift, int to);
-
 // Initialise shared memory
 int numRequestsServed, totalRequests;
 Buffer* buffer;
@@ -94,7 +91,7 @@ void startSim(int bufferSize, double liftDelay)
 
         // Free everything else
         free(lifts);
-        free(requests);
+        free(requests); //freeLinkedList()??
         freeBuffer(buffer);
     }  
 }
@@ -153,19 +150,11 @@ void* lift(void* arg)
             move(lift, req->destination);
             free(req);
         }
-
-        // Check of there are anymore requests
-        if (numRequestsServed < totalRequests)
-        {
-            // Other elevators will be stuck waiting.
-            // Let them know buffer is indefinitely empty.
-            pthread_cond_signal(&bufNotEmpty);
-        }
     }
     return 0;
 }
 
-static void move(Lift* lift, int to)
+void move(Lift* lift, int to)
 {
     printf("lift %d: moving from %d to %d\n", 
             lift->id, lift->currFloor, to);
