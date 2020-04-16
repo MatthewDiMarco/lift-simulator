@@ -71,16 +71,6 @@ void startSim(int bufferSize, double liftDelay)
     }
     else
     {
-        //TEMP
-        LinkedList* requestsCopy = createLinkedList();
-        RequestNode* thisNode = requests->head;
-        while(thisNode != NULL)
-        {
-            insertLast(requestsCopy, thisNode->req);
-            thisNode = thisNode->next;
-        }
-        //...
-
         // Allocate shared memory and attach to address space
         int shmId_1 = shmget(1000, 1024, 0666 | IPC_CREAT);
         int shmId_2 = shmget(2000, 1024, 0666 | IPC_CREAT);
@@ -125,15 +115,6 @@ void startSim(int bufferSize, double liftDelay)
             if (cpid2 == 0)
             {
                 lift(lifts[0]); // Lift-1
-
-                // Free
-                for (int ii = 0; ii < NUM_LIFTS; ii++)
-                {
-                    free(lifts[ii]);
-                }  
-                free(lifts);
-                freeLinkedList(requests);
-                freeLinkedList(requestsCopy);
             }
             else if (cpid2 > 0)
             {
@@ -141,28 +122,10 @@ void startSim(int bufferSize, double liftDelay)
                 if (cpid3 == 0)
                 {
                     lift(lifts[1]); // Lift-2
-
-                    // Free
-                    for (int ii = 0; ii < NUM_LIFTS; ii++)
-                    {
-                        free(lifts[ii]);
-                    }  
-                    free(lifts);
-                    freeLinkedList(requests);
-                    freeLinkedList(requestsCopy);
                 }
                 else if (cpid3 > 0)
                 {
                     lift(lifts[2]); // Lift-3
-
-                    // Free
-                    for (int ii = 0; ii < NUM_LIFTS; ii++)
-                    {
-                        free(lifts[ii]);
-                    }  
-                    free(lifts);
-                    freeLinkedList(requests);
-                    freeLinkedList(requestsCopy);
                 }
             }
         }
@@ -173,22 +136,22 @@ void startSim(int bufferSize, double liftDelay)
             // Wait for all children to finish up before closing
             int status = 0;
             while ((wait(&status)) > 0);
-
-            // Free
-            for (int ii = 0; ii < NUM_LIFTS; ii++)
-            {
-                free(lifts[ii]);
-            }  
-            free(lifts);
-            freeLinkedList(requests);
-            freeLinkedList(requestsCopy);
         }
+
+        // Free
+        for (int ii = 0; ii < NUM_LIFTS; ii++)
+        {
+            free(lifts[ii]);
+        }  
+        free(lifts);
+        freeLinkedList(requests);
     }  
 }
 
 void* request(void* arg)
 {
     LinkedList* requests = (LinkedList*)arg;
+    LinkedList* requestsCopy = createLinkedList();
     Request* thisReq = removeStart(requests);
 
     while (thisReq != NULL)
@@ -198,12 +161,15 @@ void* request(void* arg)
 
         printf("NEW REQUEST: %d to %d\n", thisReq->start, thisReq->destination);
         addToBuffer(shm->buffer, thisReq);
+        insertLast(requestsCopy, thisReq);
 
         sem_post(&shm->mutex);
         sem_post(&shm->full); // CRITICAL SECTION END
 
         thisReq = removeStart(requests);
     }
+
+    freeLinkedList(requestsCopy); // free requests
 
     return 0;
 }
