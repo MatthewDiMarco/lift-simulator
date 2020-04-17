@@ -11,7 +11,7 @@
 // Constants
 #define SIM_INPUT "sim_input.csv"
 #define SYNTAX "./lift_sim_A/B <buffer-size> <lift-delay>"
-#define ERR "both args should be a numeric value >= 1"
+#define ERR "buffer should be >= 1, lift-delay should be >= 0"
 
 #define GROUND_FLOOR 1
 #define NUM_FLOORS 20
@@ -23,12 +23,12 @@ typedef struct Lift
 {
     int id;
     int currFloor;
-    double delay;
+    int delay;
 } Lift;
 
 // Protoype Declarations
 int main(int argc, char const *argv[]);
-void startSim(int bufferSize, double liftDelay);
+void startSim(int bufferSize, int liftDelay);
 void* request(void* arg);
 void* lift(void* arg);
 void move(Lift* lift, int to);

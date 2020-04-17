@@ -37,7 +37,7 @@ Shared* shm;
 int main(int argc, char const *argv[])
 {
     int bufferSize;
-    double liftDelay;
+    int liftDelay;
 
     if (argc != 3)
     {
@@ -46,9 +46,9 @@ int main(int argc, char const *argv[])
     else
     {
         bufferSize = atoi(argv[1]);
-        liftDelay = atof(argv[2]);
+        liftDelay = atoi(argv[2]);
 
-        if (bufferSize <= 0 || liftDelay <= 0)
+        if (bufferSize <= 0 || liftDelay < 0)
         {
             printf("Error: %s\n", ERR);
         }
@@ -61,7 +61,7 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-void startSim(int bufferSize, double liftDelay)
+void startSim(int bufferSize, int liftDelay)
 {
     LinkedList* requests = createLinkedList();
     if (readRequests(SIM_INPUT, requests, GROUND_FLOOR, NUM_FLOORS) == -1)
@@ -145,6 +145,8 @@ void startSim(int bufferSize, double liftDelay)
         }  
         free(lifts);
         freeLinkedList(requests);
+
+        // TODO: destroy semaphores
     }  
 }
 
@@ -179,7 +181,8 @@ void* lift(void* arg)
     Lift* lift = (Lift*)arg;
     Request* req;
 
-    while (shm->numRequestsServed < shm->totalRequests)
+    int finished = 0;
+    while (finished != 1)
     {
         sem_wait(&shm->full); // CRITICAL SECTION START
         sem_wait(&shm->mutex);
@@ -187,17 +190,25 @@ void* lift(void* arg)
         req = popBuffer(shm->buffer);
         shm->numRequestsServed++;
 
+        // If this was the last request, exit loop
+        if (shm->numRequestsServed >= shm->totalRequests)
+        {
+            finished = 1;
+
+            // Release other lifts stuck waiting 
+            sem_post(&shm->full);
+        }
+
         sem_post(&shm->mutex);
         sem_post(&shm->empty); // CRITICAL SECTION END
 
-        // Serve request
+        // Serve
         if (req != NULL)
         {
             if (lift->currFloor != req->start)
             {
                 move(lift, req->start);
             }
-
             move(lift, req->destination);
         }
     }

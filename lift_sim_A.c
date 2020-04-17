@@ -27,7 +27,7 @@ pthread_cond_t bufNotEmpty = PTHREAD_COND_INITIALIZER;
 int main(int argc, char const *argv[])
 {
     int bufferSize;
-    double liftDelay;
+    int liftDelay;
 
     if (argc != 3)
     {
@@ -36,9 +36,9 @@ int main(int argc, char const *argv[])
     else
     {
         bufferSize = atoi(argv[1]);
-        liftDelay = atof(argv[2]);
+        liftDelay = atoi(argv[2]);
 
-        if (bufferSize <= 0 || liftDelay <= 0)
+        if (bufferSize <= 0 || liftDelay < 0)
         {
             printf("Error: %s\n", ERR);
         }
@@ -51,7 +51,7 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-void startSim(int bufferSize, double liftDelay)
+void startSim(int bufferSize, int liftDelay)
 {
     buffer = createBuffer(bufferSize);
     LinkedList* requests = createLinkedList();
@@ -89,6 +89,8 @@ void startSim(int bufferSize, double liftDelay)
             free(lifts[ii]);
         }
 
+        // TODO: exit threads
+
         // Free everything else
         free(lifts);
         free(requests); //freeLinkedList()??
@@ -100,6 +102,7 @@ void* request(void* arg)
 {
     LinkedList* requests = (LinkedList*)arg;
     Request* thisReq = removeStart(requests);
+
     while (thisReq != NULL)
     {
         pthread_mutex_lock(&bufLock); // CRITICAL SECTION START
@@ -125,32 +128,52 @@ void* lift(void* arg)
 {
     Lift* lift = (Lift*)arg;
     Request* req;
-    while (numRequestsServed < totalRequests)
+    
+    int finished = 0;
+    while (finished != 1)
     {
         pthread_mutex_lock(&bufLock); // CRITICAL SECTION START
-        if (isEmpty(buffer))
+
+        // End loop if there are no more requests
+        if (numRequestsServed >= totalRequests)
         {
-            pthread_cond_wait(&bufNotEmpty, &bufLock);
+            finished = 1;
+            pthread_mutex_unlock(&bufLock);
         }
-
-        req = popBuffer(buffer);
-        numRequestsServed++;
-
-        pthread_cond_signal(&bufNotFull);
-        pthread_mutex_unlock(&bufLock); // CRITICAL SECTION END
-
-        // Serve request
-        if (req != NULL)
+        else
         {
-            if (lift->currFloor != req->start)
+            if (isEmpty(buffer))
             {
-                move(lift, req->start);
+                pthread_cond_wait(&bufNotEmpty, &bufLock);
             }
 
-            move(lift, req->destination);
-            free(req);
+            req = popBuffer(buffer);
+
+            // Serve request (if there is one)
+            if (req != NULL)
+            {
+                // Add to num served before releasing mutex
+                numRequestsServed++;
+                pthread_cond_signal(&bufNotFull);
+                pthread_mutex_unlock(&bufLock);
+
+                // Serve
+                if (lift->currFloor != req->start)
+                {
+                    move(lift, req->start);
+                }
+
+                move(lift, req->destination);
+                free(req);
+            }
+            else
+            {
+                pthread_cond_signal(&bufNotFull);
+                pthread_mutex_unlock(&bufLock); // CRITICAL SECTION END
+            }
         }
     }
+
     return 0;
 }
 
