@@ -11,12 +11,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include "fileio.h"
+#include "lift_sim.h"
 #include "linked_list.h"
 
 int readRequests(char *filename, LinkedList* reqList, const int min, const int max)
 {
     char startStr[BUF], destStr[BUF];
     int numRequests = 0, linenum = 0, status = 0;
+
+    // Remove old output file
+    remove("sim_out.csv");
 
     // Open and check file
     FILE* file = fopen(filename, "r");
@@ -51,6 +55,7 @@ int readRequests(char *filename, LinkedList* reqList, const int min, const int m
             {
                 numRequests++;
                 Request* req = (Request*)malloc(sizeof(Request));
+                req->num = numRequests;
                 req->start = start;
                 req->destination = dest;
                 insertLast(reqList, req);
@@ -69,12 +74,84 @@ int readRequests(char *filename, LinkedList* reqList, const int min, const int m
     return status;
 }
 
-int writeRequest()
+int writeRequest(Request* req)
 {
-    return 0;
+    int status = 0; 
+
+    // Open and check file
+    FILE* file = fopen(OUT_FILE, "a");
+    if (file == NULL)
+    {
+        perror("there was an error opening the file");
+        status = -1;
+    }
+    else
+    {
+        // Do writing
+        fprintf(file, "------------------------------------------\n");
+        fprintf(file, "New Lift Request From Floor %d to Floor %d\n",
+                req->start, req->destination);
+
+        fprintf(file, "Request No: %d\n", req->num);
+        fprintf(file, "------------------------------------------\n");
+        fprintf(file, "\n"); // Done
+
+        // Final error check
+        if (ferror(file))
+        {
+            perror("there was an error closing the file");
+            status = -1;
+        }
+        fclose(file);
+    }
+
+    return status;
 }
 
-int writeLiftActivity()
+int writeLiftActivity(Lift* lift, Request* req)
 {
-    return 0;
+    int status = 0; 
+
+    // Open and check file
+    FILE* file = fopen(OUT_FILE, "a");
+    if (file == NULL)
+    {
+        perror("there was an error opening the file");
+        status = -1;
+    }
+    else
+    {
+        // Do writing
+        fprintf(file, "Lift-%d Operation\n", lift->id);
+        fprintf(file, "Previous position: Floor %d\n", lift->currFloor);
+        fprintf(file, "Request: Floor %d to %d\n", req->start, req->destination);
+        fprintf(file, "Detail operations:\n");
+
+        if (lift->currFloor != req->start)
+        {
+            fprintf(file, "    Go from Floor %d to Floor %d\n",
+                    lift->currFloor, req->start);
+        }
+        
+        fprintf(file, "    Go from Floor %d to Floor %d\n",
+                req->start, req->destination);
+
+        int numMov = (abs(lift->currFloor - req->start)) + 
+                     (abs(req->start - req->destination));
+        fprintf(file, "    #movements for this request: %d\n", numMov);
+        fprintf(file, "    #request: %d\n", lift->numRequests);
+        fprintf(file, "    Total #movement: %d\n", lift->numMovements + numMov);
+        fprintf(file, "Current position: Floor %d\n", req->destination);
+        fprintf(file, "\n"); // Done
+
+        // Final error check
+        if (ferror(file))
+        {
+            perror("there was an error closing the file");
+            status = -1;
+        }
+        fclose(file);
+    }
+
+    return status;
 }

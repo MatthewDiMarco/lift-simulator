@@ -21,7 +21,7 @@ int main(int argc, char const *argv[])
     for (int ii = 0; ii < bufferSize; ii++)
     {
         requests[ii] = (Request*)malloc(sizeof(Request));
-        requests[ii]->start = ii + 1;
+        requests[ii]->next_out = ii + 1;
         requests[ii]->destination = ii + ii + 2;
     }
 
@@ -65,7 +65,7 @@ int main(int argc, char const *argv[])
         printf("FAILED\n");
     }
     else if (isEmpty(buf) == 1 && isFull(buf) == 0 &&
-             buf->start == 0 && buf->next == 0 && 
+             buf->next_out == 0 && buf->next_in == 0 && 
              buf->capacity == bufferSize && buf->buf != NULL)
     {
         printf("PASSED\n");
@@ -84,7 +84,7 @@ int main(int argc, char const *argv[])
     printf("addToBuffer() 1: ");
     addToBuffer(buf, requests[0]);
 
-    if (buf->buf[buf->start] != requests[0] ||
+    if (buf->buf[buf->next_out] != requests[0] ||
         isEmpty(buf) != 0 || isFull(buf) != 0)
     {
         printf("FAILED\n");
@@ -119,7 +119,7 @@ int main(int argc, char const *argv[])
     printf("popBuffer() 1: ");
     data = popBuffer(buf);
 
-    if (data->start != requests[0]->start || 
+    if (data->next_out != requests[0]->next_out || 
         data->destination != requests[0]->destination ||
         isEmpty(buf) == 1 || isFull(buf) == 1)
     {

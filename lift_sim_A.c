@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <string.h>
 #include "lift_sim.h"
 #include "fileio.h"
 #include "linked_list.h"
@@ -24,12 +25,12 @@ pthread_mutex_t bufLock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t bufNotFull = PTHREAD_COND_INITIALIZER;
 pthread_cond_t bufNotEmpty = PTHREAD_COND_INITIALIZER;
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
     int bufferSize;
     int liftDelay;
 
-    if (argc != 3)
+    if (argc < 3 || argc > 4)
     {
         printf("wrong args: format = %s\n", SYNTAX);
     }
@@ -44,20 +45,35 @@ int main(int argc, char const *argv[])
         }
         else
         {
-            startSim(bufferSize, liftDelay);
+            if (argv[3] != NULL)
+            {
+                startSim(bufferSize, liftDelay, argv[3]);
+            }
+            else
+            {
+                startSim(bufferSize, liftDelay, SIM_INPUT);
+            }
         }
     }
 
     return 0;
 }
 
-void startSim(int bufferSize, int liftDelay)
+void startSim(int bufferSize, int liftDelay, char* filename)
 {
     buffer = createBuffer(bufferSize);
     LinkedList* requests = createLinkedList();
-    if (readRequests(SIM_INPUT, requests, GROUND_FLOOR, NUM_FLOORS) == -1)
+
+    int stat = readRequests(filename, requests, GROUND_FLOOR, NUM_FLOORS);
+    if (stat == -1)
     {
-        printf("Failed to read %s", SIM_INPUT);
+        printf("failed to read %s\n", filename);
+        free(requests);
+        freeBuffer(buffer);
+    }
+    else if(requests->size < 50 || requests->size > 100)
+    {
+        printf("the sim can only accomodate %d-%d requests\n", MIN_REQ, MAX_REQ);
         free(requests);
         freeBuffer(buffer);
     }
@@ -78,6 +94,8 @@ void startSim(int bufferSize, int liftDelay)
             lifts[ii]->id = ii + 1;
             lifts[ii]->currFloor = 1;
             lifts[ii]->delay = liftDelay;
+            lifts[ii]->numRequests = 0;
+            lifts[ii]->numMovements = 0;
             pthread_create(&lift_t[ii], NULL, lift, lifts[ii]);
         }
 
@@ -88,8 +106,6 @@ void startSim(int bufferSize, int liftDelay)
             pthread_join(lift_t[ii], NULL);
             free(lifts[ii]);
         }
-
-        // TODO: exit threads
 
         // Free everything else
         free(lifts);
@@ -114,6 +130,7 @@ void* request(void* arg)
 
         printf("NEW REQUEST: %d to %d\n", thisReq->start, thisReq->destination);
         addToBuffer(buffer, thisReq);
+        writeRequest(thisReq);
 
         pthread_cond_signal(&bufNotEmpty);
         pthread_mutex_unlock(&bufLock); // CRITICAL SECTION END
@@ -152,6 +169,10 @@ void* lift(void* arg)
             // Serve request (if there is one)
             if (req != NULL)
             {
+                // Write acitvity to log
+                lift->numRequests++;
+                writeLiftActivity(lift, req);
+
                 // Add to num served before releasing mutex
                 numRequestsServed++;
                 pthread_cond_signal(&bufNotFull);
@@ -164,6 +185,8 @@ void* lift(void* arg)
                 }
 
                 move(lift, req->destination);
+
+                // Request no longer needed
                 free(req);
             }
             else
@@ -181,6 +204,10 @@ void move(Lift* lift, int to)
 {
     printf("lift %d: moving from %d to %d\n", 
             lift->id, lift->currFloor, to);
+
     sleep(lift->delay);
+
+    // Increment movements
+    lift->numMovements += abs(lift->currFloor - to);
     lift->currFloor = to;
 }

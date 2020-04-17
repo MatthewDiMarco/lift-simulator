@@ -14,6 +14,7 @@
 // Represents a request (floor to dest)
 typedef struct Request
 {
+    int num;
     int start;
     int destination;
 } Request;

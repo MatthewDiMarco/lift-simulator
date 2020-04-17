@@ -20,8 +20,8 @@ Buffer* createBuffer(int size)
         newBuf = (Buffer*)malloc(sizeof(Buffer));
 
         newBuf->capacity = size;
-        newBuf->start = 0;
-        newBuf->next = 0;
+        newBuf->next_out = 0;
+        newBuf->next_in = 0;
 
         newBuf->buf = (Request**)malloc(sizeof(Request*) * size);
         for (int ii = 0; ii < size; ii++)
@@ -35,11 +35,11 @@ Buffer* createBuffer(int size)
 
 Request* popBuffer(Buffer* buf)
 {
-    Request* req = buf->buf[buf->start];
+    Request* req = buf->buf[buf->next_out];
     if (req != NULL) // Only change pointers if buf wasn't empty
     {
-        buf->buf[buf->start] = NULL;
-        buf->start = (buf->start + 1) % buf->capacity;
+        buf->buf[buf->next_out] = NULL;
+        buf->next_out = (buf->next_out + 1) % buf->capacity;
     }
 
     return req;
@@ -47,17 +47,17 @@ Request* popBuffer(Buffer* buf)
 
 void addToBuffer(Buffer* buf, Request* inReq)
 {
-    if (buf->buf[buf->next] == NULL) // Check for free slot
+    if (buf->buf[buf->next_in] == NULL) // Check for free slot
     {
-        buf->buf[buf->next] = inReq;
-        buf->next = (buf->next + 1) % buf->capacity;
+        buf->buf[buf->next_in] = inReq;
+        buf->next_in = (buf->next_in + 1) % buf->capacity;
     }
 }
 
 int isEmpty(Buffer* buf)
 {
     int empty = 0;
-    if (buf->next == buf->start && buf->buf[buf->next] == NULL)
+    if (buf->next_in == buf->next_out && buf->buf[buf->next_in] == NULL)
     {
         empty = 1;
     }
@@ -68,7 +68,7 @@ int isEmpty(Buffer* buf)
 int isFull(Buffer* buf)
 {
     int full = 0;
-    if (buf->next == buf->start && buf->buf[buf->next] != NULL)
+    if (buf->next_in == buf->next_out && buf->buf[buf->next_in] != NULL)
     {
         full = 1;
     }

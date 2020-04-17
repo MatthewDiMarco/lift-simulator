@@ -43,10 +43,10 @@ a : $(OBJA) $(OBJ)
 b : $(OBJB) $(OBJ)
 	$(CC) -pthread $(OBJB) $(OBJ) -o $(EXECB)
 
-lift_sim_A.o : lift_sim_A.c lift_sim.h fileio.h linked_list.h
+lift_sim_A.o : lift_sim_A.c lift_sim.h fileio.h linked_list.h buffer.h
 	$(CC) lift_sim_A.c -c $(FLAGS)
 
-lift_sim_B.o : lift_sim_B.c lift_sim.h fileio.h linked_list.h
+lift_sim_B.o : lift_sim_B.c lift_sim.h fileio.h linked_list.h buffer.h
 	$(CC) lift_sim_B.c -c $(FLAGS)
 
 fileio.o : fileio.c fileio.h linked_list.h
@@ -89,5 +89,5 @@ runtests :
 	valgrind --leak-check=full ./test_buffer
 
 clean :
-	rm -f $(EXECA) $(EXECB) test_linked_list test_buffer *.o
+	rm -f sim_out.csv $(EXECA) $(EXECB) test_linked_list test_buffer *.o
 	

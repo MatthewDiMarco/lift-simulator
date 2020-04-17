@@ -34,12 +34,12 @@ typedef struct Shared
 // Initialise shared memory
 Shared* shm;
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
     int bufferSize;
     int liftDelay;
 
-    if (argc != 3)
+    if (argc < 3 || argc > 4)
     {
         printf("wrong args: format = %s\n", SYNTAX);
     }
@@ -54,19 +54,26 @@ int main(int argc, char const *argv[])
         }
         else
         {
-            startSim(bufferSize, liftDelay);
+            if (argv[3] != NULL)
+            {
+                startSim(bufferSize, liftDelay, argv[3]);
+            }
+            else
+            {
+                startSim(bufferSize, liftDelay, SIM_INPUT);
+            }
         }
     }
 
     return 0;
 }
 
-void startSim(int bufferSize, int liftDelay)
+void startSim(int bufferSize, int liftDelay, char* filename)
 {
     LinkedList* requests = createLinkedList();
-    if (readRequests(SIM_INPUT, requests, GROUND_FLOOR, NUM_FLOORS) == -1)
+    if (readRequests(filename, requests, GROUND_FLOOR, NUM_FLOORS) == -1)
     {
-        printf("Failed to read %s", SIM_INPUT);
+        printf("failed to read %s\n", filename);
         freeLinkedList(requests);
     }
     else
@@ -89,8 +96,8 @@ void startSim(int bufferSize, int liftDelay)
 
         // Initialise Buffer
         shm->buffer->capacity = bufferSize;
-        shm->buffer->next = 0;
-        shm->buffer->start = 0;
+        shm->buffer->next_in = 0;
+        shm->buffer->next_out = 0;
         for (int ii = 0; ii < bufferSize; ii++)
         {
             shm->buffer->buf[ii] = NULL; // null means slot is empty
@@ -104,6 +111,8 @@ void startSim(int bufferSize, int liftDelay)
             lifts[ii]->id = ii + 1;
             lifts[ii]->currFloor = 1;
             lifts[ii]->delay = liftDelay;
+            lifts[ii]->numRequests = 0;
+            lifts[ii]->numMovements = 0;
         }
 
         // Create 3 processes: 1 for each lift
@@ -146,7 +155,10 @@ void startSim(int bufferSize, int liftDelay)
         free(lifts);
         freeLinkedList(requests);
 
-        // TODO: destroy semaphores
+        // Free semaphores
+        sem_destroy(&shm->mutex);
+        sem_destroy(&shm->empty);
+        sem_destroy(&shm->full);
     }  
 }
 
@@ -164,6 +176,7 @@ void* request(void* arg)
         printf("NEW REQUEST: %d to %d\n", thisReq->start, thisReq->destination);
         addToBuffer(shm->buffer, thisReq);
         insertLast(requestsCopy, thisReq);
+        writeRequest(thisReq);
 
         sem_post(&shm->mutex);
         sem_post(&shm->full); // CRITICAL SECTION END
@@ -199,6 +212,13 @@ void* lift(void* arg)
             sem_post(&shm->full);
         }
 
+        // Write acitvity to log 
+        if (req != NULL)
+        {
+            lift->numRequests++;
+            writeLiftActivity(lift, req);
+        }
+
         sem_post(&shm->mutex);
         sem_post(&shm->empty); // CRITICAL SECTION END
 
@@ -220,6 +240,10 @@ void move(Lift* lift, int to)
 {
     printf("lift %d: moving from %d to %d\n", 
             lift->id, lift->currFloor, to);
+
     sleep(lift->delay);
+
+    // Increment movements
+    lift->numMovements += abs(lift->currFloor - to);
     lift->currFloor = to;
 }
