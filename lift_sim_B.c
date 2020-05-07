@@ -21,6 +21,7 @@
 #include "linked_list.h"
 #include "buffer.h"
 
+// Initialise shared memory
 typedef struct Shared
 {   
     int numRequestsServed;
@@ -31,7 +32,6 @@ typedef struct Shared
     sem_t empty;
 } Shared;
 
-// Initialise shared memory
 Shared* shm;
 
 int main(int argc, char *argv[])
@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+// REMOVE ALL TEMPS!
 void startSim(int bufferSize, int liftDelay, char* filename)
 {
     LinkedList* requests = createLinkedList();
@@ -91,7 +92,7 @@ void startSim(int bufferSize, int liftDelay, char* filename)
         shm->totalRequests = requests->size;
         shm->numRequestsServed = 0;
         sem_init(&shm->mutex, 1, 1);
-        sem_init(&shm->empty, 1, shm->buffer->capacity);
+        sem_init(&shm->empty, 1, bufferSize);
         sem_init(&shm->full, 1, 0);
 
         // Initialise Buffer
@@ -178,8 +179,8 @@ void* request(void* arg)
         insertLast(requestsCopy, thisReq);
         writeRequest(thisReq);
 
-        sem_post(&shm->mutex);
-        sem_post(&shm->full); // CRITICAL SECTION END
+        sem_post(&shm->full); 
+        sem_post(&shm->mutex); // CRITICAL SECTION END
 
         thisReq = removeStart(requests);
     }

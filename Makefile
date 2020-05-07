@@ -21,7 +21,7 @@ EXECA 	= lift_sim_A
 EXECB 	= lift_sim_B
 
 BUF 	= 10
-DELAY	= 1
+DELAY	= 0
 
 # debug conditional compilation
 
@@ -76,13 +76,19 @@ runa :
 	./$(EXECA) $(BUF) $(DELAY) 
 
 runaval :
-	valgrind ./$(EXECA) $(BUF) $(DELAY) 
+	valgrind --leak-check=full ./$(EXECA) $(BUF) $(DELAY) 
+
+runahel :
+	valgrind --tool=helgrind ./$(EXECA) $(BUF) $(DELAY) 
 
 runb :
 	./$(EXECB) $(BUF) $(DELAY) 
 
 runbval :
-	valgrind ./$(EXECB) $(BUF) $(DELAY) 
+	valgrind --leak-check=full ./$(EXECB) $(BUF) $(DELAY) 
+
+runbhel :
+	valgrind --tool=helgrind ./$(EXECB) $(BUF) $(DELAY) 
 
 runtests :
 	valgrind --leak-check=full ./test_linked_list

@@ -21,7 +21,7 @@ int main(int argc, char const *argv[])
     for (int ii = 0; ii < bufferSize; ii++)
     {
         requests[ii] = (Request*)malloc(sizeof(Request));
-        requests[ii]->next_out = ii + 1;
+        requests[ii]->start = ii + 1;
         requests[ii]->destination = ii + ii + 2;
     }
 
@@ -119,7 +119,7 @@ int main(int argc, char const *argv[])
     printf("popBuffer() 1: ");
     data = popBuffer(buf);
 
-    if (data->next_out != requests[0]->next_out || 
+    if (data->start != requests[0]->start || 
         data->destination != requests[0]->destination ||
         isEmpty(buf) == 1 || isFull(buf) == 1)
     {
