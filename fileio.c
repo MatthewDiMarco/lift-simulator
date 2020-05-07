@@ -3,7 +3,10 @@
  * AUTHOR:      Matthew Di Marco
  * UNIT:        Operating Systems
  *
- * PURPOSE:     [todo]
+ * PURPOSE:     Handles all file input/output related tasks, including:
+ *                  - loading the input file
+ *                  - writing requests, and 
+ *                  - writing lift operations
  *
  * LAST MOD:    12/04/20 
  * ***************************************************************************/
@@ -14,6 +17,18 @@
 #include "lift_sim.h"
 #include "linked_list.h"
 
+/* ****************************************************************************
+ * NAME:        readRequests
+ * 
+ * PURPOSE:     Constructs a number of Lift Requests from an input file and
+ *              appends them an imported list.
+ * 
+ * IMPORT:      filename - name of fiel
+ *              reqList - list to house requests
+ *              min - min floor
+ *              max - max floor
+ * EXPORT:      Error code (-1 = problem occured)
+ * ***************************************************************************/
 int readRequests(char *filename, LinkedList* reqList, const int min, const int max)
 {
     char startStr[BUF], destStr[BUF];
@@ -74,6 +89,14 @@ int readRequests(char *filename, LinkedList* reqList, const int min, const int m
     return status;
 }
 
+/* ****************************************************************************
+ * NAME:        writeRequest
+ * 
+ * PURPOSE:     Append a request struct to the output file.
+ * 
+ * IMPORT:      Pointer to a request
+ * EXPORT:      Error code (-1 = problem occured)
+ * ***************************************************************************/
 int writeRequest(Request* req)
 {
     int status = 0; 
@@ -108,6 +131,15 @@ int writeRequest(Request* req)
     return status;
 }
 
+/* ****************************************************************************
+ * NAME:        writeLiftActivity
+ * 
+ * PURPOSE:     Append some lift operation details to the output file.
+ * 
+ * IMPORT:      Pointer to the lift struct
+ *              Pointer to the request
+ * EXPORT:      Error code (-1 = problem occured)
+ * ***************************************************************************/
 int writeLiftActivity(Lift* lift, Request* req)
 {
     int status = 0; 

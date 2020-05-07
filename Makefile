@@ -3,10 +3,10 @@
  # AUTHOR:		Matthew Di Marco
  # CREATED:		11/04/20
  # -----
- # MODIFIED:	14/04/20
+ # MODIFIED:	07/05/20
  # BY			Matthew Di Marco
  # -----
- # PURPOSE:		Makefile for implementation for Lift Simulator.
+ # PURPOSE:		Makefile for lift sim.
 ##
 
 # variables

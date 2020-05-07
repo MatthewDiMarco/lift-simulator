@@ -4,9 +4,22 @@
  * UNIT:        Operating Systems
  *
  * PURPOSE:     Implementation B of the Lift Simulator.
- *              Lift Simulator ...
+ *              
+ *              This program simulates 3 lifts servicing a 20 story building
+ *              in synchronous harmony. It can handle 50-100 requests per input
+ *              file, where each line in the file is a request formatted as:
+ *              "[current_floor] [destination_floor]".
+ *              After the simulation ends, consult the file 'sim_out.csv' for 
+ *              details concerning all lift operations, and request pushes to 
+ *              the buffer in the order they happened.
+ * 
+ *              Note: the two implementations (A and B) produce the same results
+ *              but work differently 'under the hood'.
+ * 
+ *              Implementation B was made using processes through system calls. 
+ *              Semaphores were used to solve synchronisation issues.
  *
- * LAST MOD:    15/04/20 
+ * LAST MOD:    07/05/20 
  * ***************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,9 +44,17 @@ typedef struct Shared
     sem_t full;
     sem_t empty;
 } Shared;
-
 Shared* shm;
 
+/* ****************************************************************************
+ * NAME:        main
+ * 
+ * IMPORT:      Takes three command line parameters:
+ *              1. Buffer Size, i.e. max number of requests that can sit in the 
+ *                 buffer at a given time (Integer >= 1)
+ *              2. Lift Delay in seconds (Integer >= 0)
+ *              3. (optional) specific input file
+ * ***************************************************************************/
 int main(int argc, char *argv[])
 {
     int bufferSize;
@@ -68,7 +89,17 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-// REMOVE ALL TEMPS!
+/* ****************************************************************************
+ * NAME:        startSim
+ * 
+ * PURPOSE:     Start and close the simulation by reading the input file for 
+ *              requests, initialising a buffer, spawning and killing processes, 
+ *              and eventually freeing all malloc'd memory (in all processes).
+ * 
+ * IMPORT:      bufferSize - size of the buffer to initialise
+ *              liftDelay - seconds to delay lift operations
+ *              filename - input file
+ * ***************************************************************************/
 void startSim(int bufferSize, int liftDelay, char* filename)
 {
     LinkedList* requests = createLinkedList();
@@ -163,6 +194,17 @@ void startSim(int bufferSize, int liftDelay, char* filename)
     }  
 }
 
+/* ****************************************************************************
+ * NAME:        request
+ * 
+ * PURPOSE:     Function for the Lift-R process.
+ *              This process is responsible for loading requests from the list
+ *              into the buffer. Mutual exclusion is achieved through semaphores
+ *              to ensure the buffer is never accessed while other processes
+ *              are in their critical sections.
+ * 
+ * IMPORT       Linked List of requests.
+ * ***************************************************************************/
 void* request(void* arg)
 {
     LinkedList* requests = (LinkedList*)arg;
@@ -190,6 +232,16 @@ void* request(void* arg)
     return 0;
 }
 
+/* ****************************************************************************
+ * NAME:        lift
+ * 
+ * PURPOSE:     Function for the Lift-x process.
+ *              This process is responsible for extracting requests from the 
+ *              buffer and processing the lift's operation on the request. 
+ *              Mutual exclusion is ensured through semaphores.
+ * 
+ * IMPORT       Lift struct - contains lift state
+ * ***************************************************************************/
 void* lift(void* arg)
 {
     Lift* lift = (Lift*)arg;
@@ -237,6 +289,14 @@ void* lift(void* arg)
     return 0;
 }
 
+/* ****************************************************************************
+ * NAME:        move
+ * 
+ * PURPOSE:     Processes a lift operation.
+ * 
+ * IMPORT       lift - the lift struct
+ *              to - an Integer describing the destination floor
+ * ***************************************************************************/
 void move(Lift* lift, int to)
 {
     printf("lift %d: moving from %d to %d\n", 

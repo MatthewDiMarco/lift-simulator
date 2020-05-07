@@ -3,7 +3,7 @@
  * AUTHOR:      Matthew Di Marco
  * UNIT:        Operating Systems
  * 
- * PURPOSE:     []
+ * PURPOSE:     Header file for buffer.c
  *
  * LAST MOD:    14/04/20
  * ***************************************************************************/

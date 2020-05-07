@@ -1,3 +1,6 @@
+##
+ # This file generates random input files for the lifts
+##
 import random
 
 # constants

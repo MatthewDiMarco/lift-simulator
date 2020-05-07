@@ -16,7 +16,7 @@
  * NAME:        createLinkedList
  * 
  * PURPOSE:     To generate a blank linked list.
- *
+ * 
  * EXPORT:      pointer to a linked list.
  * ***************************************************************************/
 LinkedList* createLinkedList()

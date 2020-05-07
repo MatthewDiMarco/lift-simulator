@@ -4,7 +4,20 @@
  * UNIT:        Operating Systems
  *
  * PURPOSE:     Implementation A of the Lift Simulator.
- *              Lift Simulator ...
+ *              
+ *              This program simulates 3 lifts servicing a 20 story building
+ *              in synchronous harmony. It can handle 50-100 requests per input
+ *              file, where each line in the file is a request formatted as:
+ *              "[current_floor] [destination_floor]".
+ *              After the simulation ends, consult the file 'sim_out.csv' for 
+ *              details concerning all lift operations, and request pushes to 
+ *              the buffer in the order they happened.
+ * 
+ *              Note: the two implementations (A and B) produce the same results
+ *              but work differently 'under the hood'.
+ * 
+ *              Implementation A was made using threads and the pthread library
+ *              to address and solve synchronisation issues.
  *
  * LAST MOD:    14/04/20 
  * ***************************************************************************/
@@ -25,6 +38,15 @@ pthread_mutex_t bufLock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t bufNotFull = PTHREAD_COND_INITIALIZER;
 pthread_cond_t bufNotEmpty = PTHREAD_COND_INITIALIZER;
 
+/* ****************************************************************************
+ * NAME:        main
+ * 
+ * IMPORT:      Takes three command line parameters:
+ *              1. Buffer Size, i.e. max number of requests that can sit in the 
+ *                 buffer at a given time (Integer >= 1)
+ *              2. Lift Delay in seconds (Integer >= 0)
+ *              3. (optional) specific input file
+ * ***************************************************************************/
 int main(int argc, char *argv[])
 {
     int bufferSize;
@@ -59,6 +81,17 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+/* ****************************************************************************
+ * NAME:        startSim
+ * 
+ * PURPOSE:     Start and close the simulation by reading the input file for 
+ *              requests, initialising a buffer, spawning / joining threads, and
+ *              eventually freeing all malloc'd memory.
+ * 
+ * IMPORT:      bufferSize - size of the buffer to initialise
+ *              liftDelay - seconds to delay lift operations
+ *              filename - input file
+ * ***************************************************************************/
 void startSim(int bufferSize, int liftDelay, char* filename)
 {
     buffer = createBuffer(bufferSize);
@@ -114,6 +147,17 @@ void startSim(int bufferSize, int liftDelay, char* filename)
     }  
 }
 
+/* ****************************************************************************
+ * NAME:        request
+ * 
+ * PURPOSE:     Function for the Lift-R thread.
+ *              This thread is responsible for loading requests from the list
+ *              into the buffer. Mutual exclusion is achieved through pthread
+ *              locks to ensure the buffer is never accessed while other threads
+ *              are in their critical sections.
+ * 
+ * IMPORT       Linked List of requests.
+ * ***************************************************************************/
 void* request(void* arg)
 {
     LinkedList* requests = (LinkedList*)arg;
@@ -141,6 +185,16 @@ void* request(void* arg)
     return 0;
 }
 
+/* ****************************************************************************
+ * NAME:        lift
+ * 
+ * PURPOSE:     Function for the Lift-x thread.
+ *              This thread is responsible for extracting requests from the 
+ *              buffer and processing the lift's operation on the request. 
+ *              Mutual exclusion is ensured through pthread locks.
+ * 
+ * IMPORT       Lift struct - contains lift state
+ * ***************************************************************************/
 void* lift(void* arg)
 {
     Lift* lift = (Lift*)arg;
@@ -159,6 +213,7 @@ void* lift(void* arg)
         }
         else
         {
+            // Wait and release the lock if buffer is empty
             if (isEmpty(buffer))
             {
                 pthread_cond_wait(&bufNotEmpty, &bufLock);
@@ -200,6 +255,14 @@ void* lift(void* arg)
     return 0;
 }
 
+/* ****************************************************************************
+ * NAME:        move
+ * 
+ * PURPOSE:     Processes a lift operation.
+ * 
+ * IMPORT       lift - the lift struct
+ *              to - an Integer describing the destination floor
+ * ***************************************************************************/
 void move(Lift* lift, int to)
 {
     printf("lift %d: moving from %d to %d\n", 

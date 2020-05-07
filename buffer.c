@@ -3,7 +3,8 @@
  * AUTHOR:      Matthew Di Marco
  * UNIT:        Operating Systems
  * 
- * PURPOSE:     []
+ * PURPOSE:     For manipulating the state of the buffer -- a structure used
+ *              to and manage access to requests.
  *
  * LAST MOD:    14/04/20
  * ***************************************************************************/
@@ -12,6 +13,13 @@
 #include "buffer.h"
 #include "linked_list.h"
 
+/* ****************************************************************************
+ * NAME:        createBuffer
+ * 
+ * PURPOSE:     To generate an empty buffer
+ * 
+ * EXPORT:      pointer to the buffer struct
+ * ***************************************************************************/
 Buffer* createBuffer(int size)
 {
     Buffer* newBuf = NULL;
@@ -33,6 +41,14 @@ Buffer* createBuffer(int size)
     return newBuf;
 }
 
+/* ****************************************************************************
+ * NAME:        popBuffer
+ * 
+ * PURPOSE:     Remove and return the next request in the buffer.
+ * 
+ * IMPORT:      Pointer to the buffer
+ * EXPORT:      Pointer to the request
+ * ***************************************************************************/
 Request* popBuffer(Buffer* buf)
 {
     Request* req = buf->buf[buf->next_out];
@@ -45,6 +61,14 @@ Request* popBuffer(Buffer* buf)
     return req;
 }
 
+/* ****************************************************************************
+ * NAME:        addToBuffer
+ * 
+ * PURPOSE:     Insert a request into the buffer.
+ * 
+ * IMPORT:      Pointer to the buffer
+ *              Pointer to the request
+ * ***************************************************************************/
 void addToBuffer(Buffer* buf, Request* inReq)
 {
     if (buf->buf[buf->next_in] == NULL) // Check for free slot
@@ -54,6 +78,14 @@ void addToBuffer(Buffer* buf, Request* inReq)
     }
 }
 
+/* ****************************************************************************
+ * NAME:        isEmpty
+ * 
+ * PURPOSE:     Returns 1 if the buffer is empty.
+ * 
+ * IMPORT:      Pointer to the buffer
+ * EXPORT:      Integer (1 = empty)
+ * ***************************************************************************/
 int isEmpty(Buffer* buf)
 {
     int empty = 0;
@@ -65,6 +97,14 @@ int isEmpty(Buffer* buf)
     return empty;
 }
 
+/* ****************************************************************************
+ * NAME:        isFull
+ * 
+ * PURPOSE:     Returns 1 if the buffer is full.
+ * 
+ * IMPORT:      Pointer to the buffer
+ * EXPORT:      Integer (1 = full)
+ * ***************************************************************************/
 int isFull(Buffer* buf)
 {
     int full = 0;
@@ -76,6 +116,13 @@ int isFull(Buffer* buf)
     return full;
 }
 
+/* ****************************************************************************
+ * NAME:        freeBuffer
+ * 
+ * PURPOSE:     Free entire buffer state including all requests in it.
+ * 
+ * IMPORT:      Pointer to the buffer
+ * ***************************************************************************/
 void freeBuffer(Buffer* buf)
 {
     for(int ii = 0; ii < buf->capacity; ii++)

@@ -3,7 +3,7 @@
  * AUTHOR:      Matthew Di Marco
  * UNIT:        Operating Systems
  *
- * PURPOSE:     [todo]
+ * PURPOSE:     Header file for fileio.c
  *
  * LAST MOD:    12/04/20 
  * ***************************************************************************/
