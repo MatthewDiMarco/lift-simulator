@@ -272,8 +272,8 @@ void* lift(void* arg)
             writeLiftActivity(lift, req);
         }
 
-        sem_post(&shm->mutex);
-        sem_post(&shm->empty); // CRITICAL SECTION END
+        sem_post(&shm->empty); 
+        sem_post(&shm->mutex); // CRITICAL SECTION END
 
         // Serve
         if (req != NULL)
