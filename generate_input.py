@@ -1,5 +1,5 @@
 ##
- # This file generates random input files for the lifts
+ # This script generates random input files for the lifts
 ##
 import random
 
