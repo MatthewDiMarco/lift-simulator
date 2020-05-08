@@ -16,12 +16,18 @@ The resulting executables can be run by entering:
 ./lift_sim_X <buffer_size> <lift_delay> <optional_input.csv>
 ```
 where 'X' can be replaced with A or B. Also note that the programs expect a file inside the same directory called "sim_input.csv" which contains 1 request per line of the form "[start_floor] [destination_floor]", and can accomodate 50-100 lines. But, another input file can be specified at the command line if desired.
+
 Alternatively, the programs can be executed with the make file rules "make runa" and "make runb" (use "make runxval or make runxhel to execute the programs with Valgrind/Helgrind respectfully, where x = a or b").
 
 # Examples
 
 ## Input
-Some example input files can be found inside the "sample_files" directory, but if a more diverse range of files are required, run the "generate_input.py" (Dependencies: Python 3.6.9).
+Some example input files can be found inside the "sample_files" directory, but if a more diverse range of files are required, run
+```python
+python3 generate_input.py
+```
+(Dependencies: Python 3.6.9).
+
 E.g.
 ```
 7 5
@@ -34,7 +40,9 @@ E.g.
 ```
 
 ## Output
-Each new request and lift operation is logged to an output file named "sim_out.csv". The output will resemble:
+Each new request and lift operation is logged to an output file named "sim_out.csv". 
+
+The output will resemble:
 ```
 ...
 
@@ -57,11 +65,14 @@ Current position: Floor 10
 ...
 ```
 In the sample_files/ directory, the outputs correspond like such:
+
 sim_out1.csv was run using sim_input1.csv with a buffer size of 10
+
 sim_out2.csv was run using sim_input2.csv with a buffer size of 5
+
 sim_out3.csv was run using sim_input3.csv with a buffer size of 20
 
-## Known Bugs
+# Known Bugs
 ```
     Bug #1: Occasional random freezing with implementation B
         Fault(s):   Halfway through the sim, the program will randomly freeze.
